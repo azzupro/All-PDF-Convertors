@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF to Excel Generator</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h2>PDF to Excel Generator</h2>
+        <input type="file" id="pdfFileInput" accept=".pdf">
+        <button onclick="convertToExcel()">Convert to Excel</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.0/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.9.359/pdf.min.js"></script>
+    <script>
+        function convertToExcel() {
+            var fileInput = document.getElementById('pdfFileInput');
+            var file = fileInput.files[0];
+            var reader = new FileReader();
+
+            reader.onload = function(event) {
+                var arrayBuffer = event.target.result;
+                var typedArray = new Uint8Array(arrayBuffer);
+                
+                // Load PDF
+                pdfjsLib.getDocument(typedArray).promise.then(function(pdf) {
+                    var pageNum = 1;
+                    pdf.getPage(pageNum).then(function(page) {
+                        page.getTextContent().then(function(textContent) {
+                            var text = '';
+                            textContent.items.forEach(function (item) {
+                                text += item.str + '\n';
+                            });
+
+                            // Convert text content to Excel
+                            var ws = XLSX.utils.aoa_to_sheet([[text]]);
+                            var wb = XLSX.utils.book_new();
+                            XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+                            XLSX.writeFile(wb, "pdf_to_excel.xlsx");
+                        });
+                    });
+                });
+            };
+
+            reader.readAsArrayBuffer(file);
+        }
+    </script>
+</body>
+</html>

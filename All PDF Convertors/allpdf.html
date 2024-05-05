@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File to PDF Converter</title>
+    <style>
+        /* Your CSS styles here */
+    </style>
+</head>
+<body>
+    <input type="file" id="fileInput" accept="image/*, .html, .htm, .css, .js">
+    <button onclick="convertToPDF()">Convert to PDF</button>
+
+    <script>
+        function convertToPDF() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            
+            if (file) {
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                fetch('/convert', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => {
+                    if (response.ok) {
+                        // Display the converted PDF to the user
+                        window.open(response.url);
+                    } else {
+                        console.error('Conversion failed');
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            } else {
+                console.error('No file selected');
+            }
+        }
+        
+    </script>
+    <script src="script.js"></script>
+</body>
+</html>

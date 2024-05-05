@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Dynamic Web TWAIN Mobile Sample</title>
+    <script type="text/javascript" src="Resources/dynamsoft.webtwain.initiate.js"></script>
+    <script type="text/javascript" src="Resources/dynamsoft.webtwain.config.js"></script>
+    <script type="text/javascript" src="Resources/addon/dynamsoft.webtwain.addon.camera.js"></script>
+    <script type="text/javascript" src="Resources/addon/dynamsoft.webtwain.addon.pdf.js"></script>
+    <script type="text/javascript" src="common.js"></script>
+    <script type="text/javascript" src="tabs.js"></script>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=0" />
+    <link rel="stylesheet" href="css/normalize.css">
+    <link rel="stylesheet" href="css/skeleton.css">
+    <link rel="stylesheet" href="css/tabs.css">
+    <link rel="stylesheet" href="css/index.css">
+</head>
+
+<body>
+    <div style="height:100%;width:100%;position:absolute;overflow:hidden;">
+        <div id="dwtcontrolContainer" style="width:100%;height:60%"></div>
+        <div id="action" style="height:40%;">
+            <div class="tab" style="display:flex;overflow-x:auto;height:50px;">
+                <button class="tablinks" onclick="switchTab(event, 'camera')">Camera</button>
+                <button class="tablinks" onclick="switchTab(event, 'save')">Save</button>
+            </div>
+            <div style="height:calc(100% - 50px);overflow-y: auto;">
+                <div id="camera" class="tabcontent">
+                    <input id="scanDocumentButton" type="button" value="Scan Documents" onclick="ScanDocuments();" />
+                </div>
+                <div id="save"  class="tabcontent">
+                    Default Filename: <input type="text" id="filename" value="DynamicWebTWAIN"/>
+                    <input onclick="SaveWithFileDialog();" type="button" value="Save">
+                    <div>
+                        <label>
+                            <input type="radio" value="jpg" name="ImageType" id="imgTypejpeg" />JPEG</label>
+                        <label>
+                            <input type="radio" value="tif" name="ImageType" id="imgTypetiff" />TIFF</label>
+                        <label>
+                            <input type="radio" value="pdf" name="ImageType" id="imgTypepdf" checked="checked" />PDF</label>
+                    </div>
+                </div>                
+           </div>
+        </div>
+    </div>
+    <script type="text/javascript">
+        Dynamsoft.DWT.UseLocalService = false;
+        Dynamsoft.DWT.RegisterEvent('OnWebTwainReady', Dynamsoft_OnReady); // Register OnWebTwainReady event. This event fires as soon as Dynamic Web TWAIN is initialized and ready to be used
+        var DWObject;
+        switchTab(null, 'camera')
+        
+        function Dynamsoft_OnReady() {
+            DWObject = Dynamsoft.DWT.GetWebTwain('dwtcontrolContainer'); // Get the Dynamic Web TWAIN object that is embeded in the div with id 'dwtcontrolContainer'
+            if (DWObject) {
+                DWObject.Viewer.width="100%";
+                DWObject.Viewer.height="100%";
+                DWObject.SetViewMode(2, 2);
+            }
+        }
+        
+
+        function ScanDocuments() {
+            if (DWObject) {
+                let cameraContainer = document.createElement("div");
+                cameraContainer.className = "fullscreen";
+                document.body.appendChild(cameraContainer);
+                function funcConfirmExit () {
+                    cameraContainer.remove();
+                    return true;
+                }
+                let scanOptions = {};
+                scanOptions.element = cameraContainer
+                scanOptions.scannerViewer = {funcConfirmExit: funcConfirmExit}
+                DWObject.Addon.Camera.scanDocument(scanOptions).then(
+                    function(){
+                        console.log("OK");
+                    }, 
+                    function(error){
+                        console.log(error.message);
+                    }
+                );
+            }
+        }
+
+
+        //Callback functions for async APIs
+        function OnSuccess() {
+            console.log('successful');
+        }
+
+        function OnFailure(errorCode, errorString) {
+            alert(errorString);
+        }
+
+        function SaveWithFileDialog() {
+            if (DWObject) {
+                if (DWObject.HowManyImagesInBuffer > 0) {
+                    DWObject.IfShowFileDialog = true;
+                    var filename=document.getElementById("filename").value;
+                    if (document.getElementById("imgTypejpeg").checked == true) {
+                        //If the current image is B&W
+                        //1 is B&W, 8 is Gray, 24 is RGB
+                        if (DWObject.GetImageBitDepth(DWObject.CurrentImageIndexInBuffer) == 1)
+                            //If so, convert the image to Gray
+                            DWObject.ConvertToGrayScale(DWObject.CurrentImageIndexInBuffer);
+                        //Save image in JPEG
+                        DWObject.SaveAsJPEG(filename+".jpg", DWObject.CurrentImageIndexInBuffer);
+                    }
+                    else if (document.getElementById("imgTypetiff").checked == true)
+                        DWObject.SaveAllAsMultiPageTIFF(filename+".tiff", OnSuccess, OnFailure);
+                    else if (document.getElementById("imgTypepdf").checked == true)
+                        DWObject.SaveAllAsPDF(filename+".pdf", OnSuccess, OnFailure);
+                }
+            }
+        }
+    </script>
+</body>
+</html>

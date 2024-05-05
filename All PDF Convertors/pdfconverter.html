@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF Converter</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+    }
+    #fileInput {
+      margin-bottom: 10px;
+    }
+    #convertButton {
+      padding: 10px;
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <input type="file" id="fileInput">
+  <button id="convertButton">Convert to PDF</button>
+
+  <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.14.0/dist/pdf-lib.js"></script>
+  <script>
+    document.getElementById('convertButton').addEventListener('click', async () => {
+      const fileInput = document.getElementById('fileInput');
+      if (!fileInput.files.length) {
+        alert('Please select a file to convert.');
+        return;
+      }
+
+      const file = fileInput.files[0];
+      const reader = new FileReader();
+
+      reader.onload = async (event) => {
+        const fileData = new Uint8Array(event.target.result);
+
+        try {
+          // Convert to PDF
+          const pdfDoc = await PDFLib.PDFDocument.create();
+          const page = pdfDoc.addPage();
+          const { width, height } = page.getSize();
+          const pdfBytes = await pdfDoc.save();
+
+          // Download the PDF
+          const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+          const link = document.createElement('a');
+          link.href = window.URL.createObjectURL(blob);
+          link.download = `${file.name}.pdf`;
+          link.click();
+        } catch (error) {
+          console.error('Error converting to PDF:', error);
+          alert('Error converting to PDF. Please try again.');
+        }
+      };
+
+      reader.readAsArrayBuffer(file);
+    });
+  </script>
+</body>
+</html>

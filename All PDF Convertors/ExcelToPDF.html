@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excel to PDF Generator</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h2>Excel to PDF Generator</h2>
+        <input type="file" id="excelFileInput" accept=".xlsx, .xls">
+        <button onclick="convertToPDF()">Convert to PDF</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.0/xlsx.full.min.js"></script>
+    <script>
+        function convertToPDF() {
+            var fileInput = document.getElementById('excelFileInput');
+            var file = fileInput.files[0];
+            var reader = new FileReader();
+
+            reader.onload = function(event) {
+                var data = new Uint8Array(event.target.result);
+                var workbook = XLSX.read(data, {type: 'array'});
+                var sheet = workbook.Sheets[workbook.SheetNames[0]];
+                var excelData = XLSX.utils.sheet_to_json(sheet);
+
+                // Convert excelData to PDF
+                var pdf = new jsPDF();
+                pdf.text(JSON.stringify(excelData), 10, 10);
+                pdf.save('excel_to_pdf.pdf');
+            };
+
+            reader.readAsArrayBuffer(file);
+        }
+    </script>
+</body>
+</html>
